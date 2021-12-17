@@ -1,0 +1,3 @@
+[workspace]
+
+members=["http", "tcp", "config", "router"]
