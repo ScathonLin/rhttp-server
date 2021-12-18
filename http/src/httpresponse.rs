@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct HttpResponse<'a> {
+pub struct HttpResponse {
     pub version: String,
     pub status_code: String,
     pub status_text: String,
-    pub headers: Option<HashMap<&'a str, &'a str>>,
+    pub headers: Option<HashMap<String, String>>,
     pub resp_body: Option<String>,
 }
 
-impl<'a> Default for HttpResponse<'a> {
+impl Default for HttpResponse {
     fn default() -> Self {
         Self {
             version: String::from("HTTP/1.1"),
@@ -21,8 +21,8 @@ impl<'a> Default for HttpResponse<'a> {
     }
 }
 
-impl<'a> HttpResponse<'a> {
-    pub fn set_headers(&mut self, headers: HashMap<&'a str, &'a str>) {
+impl HttpResponse {
+    pub fn set_headers(&mut self, headers: HashMap<String, String>) {
         self.headers = Some(headers);
     }
 
@@ -30,7 +30,7 @@ impl<'a> HttpResponse<'a> {
         self.resp_body = Some(body);
     }
 
-    pub fn add_header(&mut self, key: &'a str, value: &'a str) {
+    pub fn add_header(&mut self, key: String, value: String) {
         let headers = self.headers.as_mut().unwrap();
         headers.insert(key, value);
     }
@@ -38,7 +38,7 @@ impl<'a> HttpResponse<'a> {
     pub fn new(
         version: String,
         status_code: String,
-        headers: Option<HashMap<&'a str, &'a str>>,
+        headers: Option<HashMap<String, String>>,
         resp_body: Option<String>,
     ) -> Self {
         let mut response = HttpResponse::default();
@@ -71,10 +71,10 @@ impl<'a> HttpResponse<'a> {
         let mut result = String::from("");
         match &self.headers {
             Some(headers) => {
-                let mut keys = headers.keys().collect::<Vec<&&str>>();
+                let mut keys = headers.keys().collect::<Vec<&String>>();
                 keys.sort();
                 keys.iter()
-                    .for_each(|&&k| result = format!("{}{}: {}\r\n", result, k, headers[k]));
+                    .for_each(|&k| result = format!("{}{}: {}\r\n", result, k, headers[k]));
                 let content_len = if let Some(body) = &self.resp_body {
                     body.len()
                 } else {
@@ -95,7 +95,7 @@ impl<'a> HttpResponse<'a> {
     }
 }
 
-impl<'a> Into<String> for HttpResponse<'a> {
+impl<'a> Into<String> for HttpResponse {
     fn into(self) -> String {
         format!(
             "{} {} {}\r\n{}\r\n{}",
@@ -120,10 +120,10 @@ mod http_response_testsuite {
         Content-Length: 4\r\n\
         \r\n\
         yyyy";
-        let mut headers = HashMap::<&str, &str>::new();
-        headers.insert("Content-Type", "text/html");
-        headers.insert("Cookie", "name=linhuadong");
-        headers.insert("Host", "localhost:8080");
+        let mut headers = HashMap::<String, String>::new();
+        headers.insert("Content-Type".into(), "text/html".into());
+        headers.insert("Cookie".into(), "name=linhuadong".into());
+        headers.insert("Host".into(), "localhost:8080".into());
 
         let resp_body = String::from("yyyy");
 

@@ -3,6 +3,7 @@ use std::{env, fs};
 use http::{
     httprequest::{HttpRequest, Resource},
     httpresponse::HttpResponse,
+    mine::GLOBAL_MIME_CFG,
 };
 
 use crate::STATIC_RES;
@@ -24,8 +25,33 @@ impl HttpReqHandler for StaticResHandler {
             .into_iter()
             .for_each(|seg| runtime_dir.push(seg));
         let res_content = fs::read_to_string(runtime_dir.to_str().unwrap());
-        resp.resp_body = res_content.ok();
-        resp.add_header("Content-Type", "text/html");
+        if let Ok(content) = res_content {
+            resp.resp_body = Some(content);
+        } else {
+            let mut path_buf = env::current_dir().unwrap();
+            path_buf.push("public/404.html");
+            let not_found_page_path = path_buf.to_str().unwrap();
+            resp.resp_body = Some(fs::read_to_string(not_found_page_path).unwrap());
+            resp.add_header("Content-Type".into(), "text/html".into());
+            return resp;
+        };
+
+        let content_type = if let Some(res_name) = path.split("/").last() {
+            match res_name.split(".").last() {
+                Some(ext) => GLOBAL_MIME_CFG.lock().map(|entries| {
+                    if let Some(tp) = entries.get(ext) {
+                        tp.clone()
+                    } else {
+                        "application/octet-stream".into()
+                    }
+                }),
+                None => Ok("application/octet-stream".into()),
+            }
+            .unwrap()
+        } else {
+            "application/octet-stream".into()
+        };
+        resp.add_header("Content-Type".into(), content_type);
         resp
     }
 }

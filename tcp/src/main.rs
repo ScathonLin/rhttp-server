@@ -12,7 +12,7 @@ fn main() {
         match socket {
             Ok(mut stream) => {
                 let request = HttpRequest::from(&mut stream);
-                println!("request is: {:?}", request);
+                // println!("request is: {:?}", request);
                 let resp = Router::route(&request);
                 let resp_str: String = resp.into();
                 stream.write(resp_str.as_bytes() as &[u8]).unwrap();
