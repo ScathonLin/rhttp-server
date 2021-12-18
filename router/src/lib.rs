@@ -1,9 +1,11 @@
+mod handler;
+
+use crate::handler::{staticres::StaticResHandler, HttpReqHandler};
+use handler::api::ApiHandler;
 use http::{
     httprequest::{HttpRequest, Method, Resource},
     httpresponse::HttpResponse,
 };
-use std::{env, fs};
-
 const STATIC_RES: &str = "/staticres";
 
 pub struct Router {}
@@ -15,21 +17,23 @@ impl Router {
             Method::GET => {
                 let Resource::Path(path) = &request.resource;
                 if path.starts_with(STATIC_RES) {
-                    // visit static resource.
-                    let real_path = &path[STATIC_RES.len()..];
-                    let mut runtime_dir = env::current_dir().unwrap();
-                    runtime_dir.push("public");
-                    real_path
-                        .split("/")
-                        .into_iter()
-                        .for_each(|seg| runtime_dir.push(seg));
-                    let res_content = fs::read_to_string(runtime_dir.to_str().unwrap());
-                    resp.resp_body = res_content.ok();
-                    resp.add_header("Content-Type", "text/html");
+                    let handler_wrapper = get_request_handler(request);
+                    if let Some(handler) = handler_wrapper {
+                        resp = handler.handle(request);
+                    }
                 }
             }
             _ => {}
         }
         resp
+    }
+}
+
+const STATIC_RES_HANDLER: StaticResHandler = StaticResHandler {};
+const API_RES_HANDLER: ApiHandler = ApiHandler {};
+fn get_request_handler(req: &HttpRequest) -> Option<Box<&dyn HttpReqHandler>> {
+    match req.method {
+        Method::GET => Some(Box::new(&STATIC_RES_HANDLER)),
+        _ => Some(Box::new(&API_RES_HANDLER)),
     }
 }
