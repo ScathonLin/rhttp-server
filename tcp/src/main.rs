@@ -1,10 +1,11 @@
-use http::{self, httprequest::HttpRequest};
-use std::{env, io::Write, net::TcpListener};
+use std::{io::Write, net::TcpListener};
+
+use http::{self, config, httprequest::HttpRequest};
 use router::Router;
+
 fn main() {
-    let current_dir = env::current_dir().unwrap();
-    let path = current_dir.to_str().unwrap();
-    println!("current dir is: {}", path);
+    config::init();
+    println!("finished to init config");
     let bind_addr = "localhost:9090";
     let server_socket = TcpListener::bind(bind_addr).unwrap();
     println!("rhttp-server started in {}", bind_addr);
@@ -12,7 +13,7 @@ fn main() {
         match socket {
             Ok(mut stream) => {
                 let request = HttpRequest::from(&mut stream);
-                // println!("request is: {:?}", request);
+                println!("request is: {:?}", request);
                 let resp = Router::route(&request);
                 let resp_str: String = resp.into();
                 stream.write(resp_str.as_bytes() as &[u8]).unwrap();

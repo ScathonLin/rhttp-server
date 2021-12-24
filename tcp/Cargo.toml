@@ -9,3 +9,4 @@ edition = "2018"
 
 http = { path = "../http" }
 router = { path = "../router" }
+boot = { path = "../boot" }

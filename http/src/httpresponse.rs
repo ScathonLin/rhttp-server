@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::config::{GLOBAL_MIME_CFG, Status};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct HttpResponse {
@@ -22,6 +23,12 @@ impl Default for HttpResponse {
 }
 
 impl HttpResponse {
+    pub fn set_status(&mut self, status: Status) {
+        let Status(status_code, status_text) = status;
+        self.status_code = status_code;
+        self.status_text = status_text;
+    }
+
     pub fn set_headers(&mut self, headers: HashMap<String, String>) {
         self.headers = Some(headers);
     }
@@ -43,18 +50,21 @@ impl HttpResponse {
     ) -> Self {
         let mut response = HttpResponse::default();
         response.version = version.to_string();
+        let unknown_status_desc = "Unknown Status";
         if status_code != "200" {
             response.status_code = status_code.to_string();
             response.status_text = {
-                let code = status_code.as_str();
-                match code {
-                    "200" => "OK".to_string(),
-                    "400" => "Bad Request".to_string(),
-                    "404" => "Not Found".to_string(),
-                    "500" => "Internel Server Error".to_string(),
-                    "502" => "Bad Gateway".to_string(),
-                    _ => "unknown error".to_string(),
-                }
+                let code = status_code;
+                let mime_config = &GLOBAL_MIME_CFG.get();
+                let mut status_text = String::from("");
+                if let Some(config) = mime_config {
+                    let desc = match config.get(&*code.to_string()) {
+                        Some(status_desc) => status_desc,
+                        None => unknown_status_desc,
+                    };
+                    status_text.push_str(desc);
+                };
+                status_text
             };
         }
         if let Some(_) = headers {
@@ -111,6 +121,7 @@ impl<'a> Into<String> for HttpResponse {
 #[cfg(test)]
 mod http_response_testsuite {
     use super::*;
+
     #[test]
     fn test_response_tostring() {
         let expected_resp_string = "HTTP/1.1 200 OK\r\n\
