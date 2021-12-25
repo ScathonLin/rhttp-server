@@ -3,13 +3,12 @@ use std::{env, fs};
 use http::{
     httprequest::{HttpRequest, Resource},
     httpresponse::HttpResponse,
-    config::GLOBAL_MIME_CFG,
 };
 
 use crate::STATIC_RES;
 
 use super::HttpReqHandler;
-use http::config::GLOBAL_STATUSES;
+use http::mimetype;
 
 #[derive(Default)]
 pub struct StaticResHandler {}
@@ -34,7 +33,7 @@ impl HttpReqHandler for StaticResHandler {
             let not_found_page_path = path_buf.to_str().unwrap();
             resp.resp_body = Some(fs::read_to_string(not_found_page_path).unwrap());
             resp.add_header("Content-Type".into(), "text/html".into());
-            let statuses = GLOBAL_STATUSES.get().unwrap();
+            let statuses = http::status::GLOBAL_STATUSES.get().unwrap();
             let status = statuses.get("404").unwrap();
             resp.set_status(status.clone());
             return resp;
@@ -42,18 +41,18 @@ impl HttpReqHandler for StaticResHandler {
 
         let content_type = if let Some(res_name) = path.split("/").last() {
             match res_name.split(".").last() {
-                Some(ext) => GLOBAL_MIME_CFG.get().map(|entries| {
+                Some(ext) => mimetype::GLOBAL_MIME_CFG.get().map(|entries| {
                     if let Some(tp) = entries.get(ext) {
                         tp.clone()
                     } else {
-                        "application/octet-stream".into()
+                        mimetype::OCTECT_STREAM.into()
                     }
                 }),
-                None => Some("application/octet-stream".into()),
+                None => Some(mimetype::OCTECT_STREAM.into()),
             }
                 .unwrap()
         } else {
-            "application/octet-stream".into()
+            mimetype::OCTECT_STREAM.into()
         };
         resp.add_header("Content-Type".into(), content_type);
         resp

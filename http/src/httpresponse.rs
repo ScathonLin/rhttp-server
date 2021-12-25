@@ -1,5 +1,7 @@
 use std::collections::HashMap;
-use crate::config::{GLOBAL_MIME_CFG, Status};
+
+use super::mimetype::GLOBAL_MIME_CFG;
+use super::status::Status;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct HttpResponse {
