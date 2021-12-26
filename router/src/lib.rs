@@ -15,7 +15,7 @@ pub struct Router {}
 impl Router {
     pub async fn route(request: &HttpRequest) -> HttpResponse {
         // 这里睡一会儿，模拟慢请求，注意这里不能std::thread::sleep() 这个睡眠不会出让CPU.
-        async_std::task::sleep(std::time::Duration::from_secs(5)).await;
+        // async_std::task::sleep(std::time::Duration::from_secs(5)).await;
         let mut resp = HttpResponse::default();
         match request.method {
             Method::GET => {

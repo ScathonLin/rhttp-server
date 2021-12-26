@@ -1,4 +1,5 @@
-use async_std::net::TcpListener;
+use async_std::net::{TcpListener, TcpStream};
+use async_std::task::spawn;
 use futures::{AsyncWriteExt, StreamExt};
 
 use http::{self, config, httprequest::HttpRequest};
@@ -12,13 +13,8 @@ async fn main() {
     let server_socket = TcpListener::bind(bind_addr).await.unwrap();
     server_socket.incoming().for_each_concurrent(None, |tcpstream| async move {
         match tcpstream {
-            Ok(mut stream) => {
-                let request = HttpRequest::from(&mut stream).await;
-                println!("request is: {:?}", request.resource);
-                let resp = Router::route(&request).await;
-                let resp_str: String = resp.into();
-                stream.write(resp_str.as_bytes() as &[u8]).await.unwrap();
-                stream.flush().await.unwrap();
+            Ok(stream) => {
+                spawn(handle_connection(stream));
             }
             Err(e) => eprintln!(
                 "failed to process incoming connection from remote. {:?}",
@@ -27,4 +23,13 @@ async fn main() {
         };
     }).await;
     println!("rhttp-server started in {}", bind_addr);
+}
+
+async fn handle_connection(mut stream: TcpStream) {
+    let request = HttpRequest::from(&mut stream).await;
+    println!("request is: {:?}", request.resource);
+    let resp = Router::route(&request).await;
+    let resp_str: String = resp.into();
+    stream.write(resp_str.as_bytes() as &[u8]).await.unwrap();
+    stream.flush().await.unwrap();
 }
