@@ -27,19 +27,4 @@ async fn main() {
         };
     }).await;
     println!("rhttp-server started in {}", bind_addr);
-    // for socket in server_socket.incoming() {
-    //     match socket {
-    //         Ok(mut stream) => {
-    //             let request = HttpRequest::from(&mut stream);
-    //             println!("request is: {:?}", request);
-    //             let resp = Router::route(&request);
-    //             let resp_str: String = resp.into();
-    //             stream.write(resp_str.as_bytes() as &[u8]).unwrap();
-    //         }
-    //         Err(e) => eprintln!(
-    //             "failed to process incoming connection from remote. {:?}",
-    //             e.kind()
-    //         ),
-    //     }
-    // }
 }
