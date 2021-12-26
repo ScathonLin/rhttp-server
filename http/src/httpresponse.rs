@@ -52,7 +52,6 @@ impl HttpResponse {
     ) -> Self {
         let mut response = HttpResponse::default();
         response.version = version.to_string();
-        let unknown_status_desc = "Unknown Status";
         if status_code != "200" {
             response.status_code = status_code.to_string();
             response.status_text = {
@@ -62,7 +61,7 @@ impl HttpResponse {
                 if let Some(config) = mime_config {
                     let desc = match config.get(&*code.to_string()) {
                         Some(status_desc) => status_desc,
-                        None => unknown_status_desc,
+                        None => "Unknown Status",
                     };
                     status_text.push_str(desc);
                 };

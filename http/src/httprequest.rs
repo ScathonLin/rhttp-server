@@ -1,8 +1,13 @@
 use std::{
     collections::HashMap,
-    io::{BufRead, BufReader, Read},
+};
+
+use async_std::{
+    io::BufReader,
     net::TcpStream,
 };
+use futures::{AsyncBufReadExt, AsyncReadExt};
+
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Method {
@@ -72,16 +77,16 @@ impl Default for HttpRequest {
     }
 }
 
-impl From<&mut TcpStream> for HttpRequest {
-    fn from(stream: &mut TcpStream) -> Self {
-        let mut reader = BufReader::new(stream.try_clone().unwrap());
+impl HttpRequest {
+    pub async fn from(stream: &mut TcpStream) -> Self {
+        let mut reader = BufReader::new(stream);
         let mut request = HttpRequest::default();
         let mut headers = HashMap::<String, String>::new();
         let mut content_len = 0;
         let mut is_req_line = true;
         loop {
             let mut line = String::from("");
-            reader.read_line(&mut line).unwrap();
+            reader.read_line(&mut line).await.unwrap();
             if is_req_line {
                 if line.is_empty() && is_req_line {
                     // if the request line is empty, skip and return default HttpRequest;
@@ -109,7 +114,8 @@ impl From<&mut TcpStream> for HttpRequest {
             let mut buf = vec![0 as u8; content_len];
             let buf_slice = buf.as_mut_slice();
             // 读取请求体，注意，这里不能在使用stream进行读取，否则会一直卡在这里，要继续用reader进行读取.
-            reader.read(buf_slice).unwrap();
+            // BufReader::read(&mut reader, buf_slice).await.unwrap();
+            reader.read(buf_slice).await.unwrap();
             request.msg_body = Some(String::from_utf8_lossy(buf_slice).to_string());
         }
         request

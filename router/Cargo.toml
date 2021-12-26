@@ -7,3 +7,7 @@ edition = "2018"
 
 [dependencies]
 http = { path = "../http" }
+
+[dependencies.async-std]
+version = "1.6"
+features = ["attributes"]

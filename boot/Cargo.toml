@@ -6,6 +6,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+futures = "0.3.19"
 
 http = { path = "../http" }
 router = { path = "../router" }
+
+[dependencies.async-std]
+version = "1.6"
+features = ["attributes"]
