@@ -1,35 +1,41 @@
-use async_std::net::{TcpListener, TcpStream};
-use async_std::task::spawn;
-use futures::{AsyncWriteExt, StreamExt};
+use std::io::Write;
+use std::net::{TcpListener, TcpStream};
 
 use http::{self, config, httprequest::HttpRequest};
 use router::Router;
+use core as self_core;
+use self_core::thread::ThreadPool;
 
-#[async_std::main]
-async fn main() {
+
+fn main() {
     config::init();
     println!("finished to init config");
     let bind_addr = "localhost:9090";
-    let server_socket = TcpListener::bind(bind_addr).await.unwrap();
-    server_socket.incoming().for_each_concurrent(None, |tcpstream| async move {
-        match tcpstream {
+    let server_socket = TcpListener::bind(bind_addr).unwrap();
+    // default 10 threads in thread pool;
+    let pool = ThreadPool::new(10);
+
+    for conn_wrapper in server_socket.incoming() {
+        match conn_wrapper {
             Ok(stream) => {
-                spawn(handle_connection(stream));
+                pool.execute(Box::new(|| {
+                    handle_connection(stream);
+                }))
             }
             Err(e) => eprintln!(
                 "failed to process incoming connection from remote. {:?}",
                 e.kind()
             ),
         };
-    }).await;
+    }
     println!("rhttp-server started in {}", bind_addr);
 }
 
-async fn handle_connection(mut stream: TcpStream) {
-    let request = HttpRequest::from(&mut stream).await;
+fn handle_connection(mut stream: TcpStream) {
+    let request = HttpRequest::from(&mut stream);
     println!("request is: {:?}", request.resource);
-    let resp = Router::route(&request).await;
+    let resp = Router::route(&request);
     let resp_str: String = resp.into();
-    stream.write(resp_str.as_bytes() as &[u8]).await.unwrap();
-    stream.flush().await.unwrap();
+    stream.write(resp_str.as_bytes() as &[u8]).unwrap();
+    stream.flush().unwrap();
 }
