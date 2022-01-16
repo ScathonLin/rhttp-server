@@ -46,6 +46,7 @@ impl Router {
         let req_str: String = proxy_req.into();
         client.write_all(req_str.as_bytes()).unwrap();
         client.flush().unwrap();
+        // 处理接口返回结果.
         match request.method {
             Method::GET => {
                 resp.set_body("this is api response.".into());
