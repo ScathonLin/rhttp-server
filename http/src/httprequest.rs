@@ -14,6 +14,18 @@ pub enum Method {
     // 暂时先支持这么多.
 }
 
+impl Into<String> for Method {
+    fn into(self) -> String {
+        match self {
+            Method::GET => "GET",
+            Method::POST => "POST",
+            Method::PUT => "PUT",
+            Method::DELETE => "DELETE",
+            _ => "GET",
+        }.into()
+    }
+}
+
 impl From<&str> for Method {
     fn from(method: &str) -> Self {
         let lowercase_method = method.to_lowercase();
@@ -35,6 +47,16 @@ pub enum Version {
     UNKNOWN,
 }
 
+impl Into<String> for Version {
+    fn into(self) -> String {
+        match self {
+            Version::HTTP1_1 => "HTTP/1.1",
+            Version::HTTP2_0 => "HTTP/2.0",
+            _ => "HTTP/1.1",
+        }.into()
+    }
+}
+
 impl From<&str> for Version {
     fn from(ver: &str) -> Self {
         let ver_in_lowercase = ver.to_lowercase();
@@ -51,7 +73,7 @@ pub enum Resource {
     Path(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct HttpRequest {
     pub method: Method,
     pub version: Version,
@@ -69,6 +91,30 @@ impl Default for HttpRequest {
             headers: None,
             msg_body: None,
         }
+    }
+}
+
+
+impl Into<String> for HttpRequest {
+    fn into(self) -> String {
+        let serialized_headers = match &self.headers {
+            None => "".into(),
+            Some(headers) => {
+                let serialized_headers = headers.iter().map(|(k, v)| {
+                    let mut item = String::from("");
+                    item.push_str(k);
+                    item.push_str(": ");
+                    item.push_str(v);
+                    item
+                }).collect::<Vec<String>>();
+                serialized_headers.join("\r\n")
+            }
+        };
+        let serialzied_body = &self.msg_body.unwrap_or(String::from(""));
+        let Resource::Path(path) = &self.resource;
+        let method: String = self.method.into();
+        let version: String = self.version.into();
+        format!("{} {} {}\r\n{}\r\n\r\n{}", method, path, version, serialized_headers, serialzied_body)
     }
 }
 

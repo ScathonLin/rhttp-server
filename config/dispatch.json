@@ -1,0 +1,12 @@
+{
+  "/index": {
+    "target": "/index",
+    "lbs": "random|loop",
+    "backend_servers": [
+      "127.0.0.1:8082",
+      "127.0.0.1:8083"
+    ],
+    "headers": [
+    ]
+  }
+}
